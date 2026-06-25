@@ -110,3 +110,14 @@ export interface StatsAgregees {
     t25: number; // 25%
   };
 }
+
+export interface AnomalieRecord {
+  id?: string;
+  nom?: string;
+  email?: string;
+  typeAnomalie: string;
+  description: string;
+  detailsCalcul?: string;
+  createdAt?: string;
+}
+

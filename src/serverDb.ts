@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { BaremeIRSA, CalculIRSADbRecord, StatsAgregees } from './types';
+import { BaremeIRSA, CalculIRSADbRecord, StatsAgregees, AnomalieRecord } from './types';
 import { BAREME_2026_DEFAULT } from './irsaCalculator';
 
 const DB_FILE_PATH = path.join(process.cwd(), 'data', 'db.json');
@@ -8,6 +8,7 @@ const DB_FILE_PATH = path.join(process.cwd(), 'data', 'db.json');
 interface DatabaseSchema {
   baremes: BaremeIRSA[];
   calculs: CalculIRSADbRecord[];
+  anomalies?: AnomalieRecord[];
 }
 
 // Ensure the data directory exists and database is initialized
@@ -20,9 +21,22 @@ export function initDb() {
   if (!fs.existsSync(DB_FILE_PATH)) {
     const initialData: DatabaseSchema = {
       baremes: [BAREME_2026_DEFAULT],
-      calculs: []
+      calculs: [],
+      anomalies: []
     };
     fs.writeFileSync(DB_FILE_PATH, JSON.stringify(initialData, null, 2), 'utf8');
+  } else {
+    // Migrate existing DB if needed
+    try {
+      const content = fs.readFileSync(DB_FILE_PATH, 'utf8');
+      const parsed = JSON.parse(content) as DatabaseSchema;
+      if (!parsed.anomalies) {
+        parsed.anomalies = [];
+        fs.writeFileSync(DB_FILE_PATH, JSON.stringify(parsed, null, 2), 'utf8');
+      }
+    } catch (e) {
+      console.error('Migration error:', e);
+    }
   }
 }
 
@@ -190,3 +204,22 @@ export function getStatsAgregees(): StatsAgregees {
     }
   };
 }
+
+// Save bug report or calculation anomaly
+export function saveAnomalie(record: Omit<AnomalieRecord, 'id' | 'createdAt'>): AnomalieRecord {
+  const db = readDb();
+  if (!db.anomalies) {
+    db.anomalies = [];
+  }
+  
+  const newRecord: AnomalieRecord = {
+    ...record,
+    id: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
+    createdAt: new Date().toISOString()
+  };
+
+  db.anomalies.push(newRecord);
+  writeDb(db);
+  return newRecord;
+}
+

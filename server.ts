@@ -14,7 +14,8 @@ import {
   saveCalcul,
   getCalculsBySession,
   deleteCalculsBySession,
-  getStatsAgregees
+  getStatsAgregees,
+  saveAnomalie
 } from './src/serverDb';
 import { TypeCalcul } from './src/types';
 
@@ -121,6 +122,27 @@ app.post('/api/irsa/bareme', (req, res) => {
     res.json({ success: true, bareme: updated });
   } catch (error) {
     res.status(500).json({ error: "Erreur lors de la sauvegarde du barème." });
+  }
+});
+
+// POST report calculation bug or anomaly
+app.post('/api/irsa/anomalies', (req, res) => {
+  const { nom, email, typeAnomalie, description, detailsCalcul } = req.body;
+  if (!typeAnomalie || !description) {
+    res.status(400).json({ error: "Les champs 'typeAnomalie' et 'description' sont requis." });
+    return;
+  }
+  try {
+    const saved = saveAnomalie({
+      nom,
+      email,
+      typeAnomalie,
+      description,
+      detailsCalcul
+    });
+    res.json({ success: true, anomalie: saved });
+  } catch (error) {
+    res.status(500).json({ error: "Erreur lors de l'enregistrement du signalement." });
   }
 });
 

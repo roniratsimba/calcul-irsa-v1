@@ -28,7 +28,11 @@ import {
   Save,
   Plus,
   X,
-  Home
+  Home,
+  Menu,
+  Bug,
+  MessageSquare,
+  Mail
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 
@@ -93,6 +97,19 @@ export default function App() {
 
   // SVG Chart interactive hover state
   const [hoveredChartMonth, setHoveredChartMonth] = useState<number | null>(null);
+
+  // Mobile navigation drawer state
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+
+  // Bug report / anomaly signalement state
+  const [isBugModalOpen, setIsBugModalOpen] = useState<boolean>(false);
+  const [bugName, setBugName] = useState<string>('');
+  const [bugEmail, setBugEmail] = useState<string>('');
+  const [bugType, setBugType] = useState<string>('calcul');
+  const [bugDescription, setBugDescription] = useState<string>('');
+  const [isSubmittingBug, setIsSubmittingBug] = useState<boolean>(false);
+  const [bugSuccess, setBugSuccess] = useState<boolean>(false);
+  const [bugError, setBugError] = useState<string | null>(null);
 
   // Trigger temporary toast notifications
   const triggerToast = (msg: string) => {
@@ -205,6 +222,51 @@ export default function App() {
     sessionStorage.removeItem('irsa_admin_token');
     triggerToast("Session administrateur fermée.");
     setCurrentPage('home');
+  };
+
+  // Submit bug report / anomaly signalement
+  const handleBugSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bugDescription.trim()) {
+      setBugError("Veuillez saisir une description de l'anomalie.");
+      return;
+    }
+    setIsSubmittingBug(true);
+    setBugError(null);
+    
+    // Gather some details from current calculator session if applicable
+    let detailsCalcul = '';
+    if (currentPage === 'calculateur') {
+      detailsCalcul = `Mode: ${calcMode}, Salaire Brut saisi: ${salaireBrut} Ar, Salaire Net Cible: ${salaireNetCible} Ar, Charges de famille: ${personnesCharge}, HSup: ${heuresSup}`;
+    } else if (currentPage === 'home') {
+      detailsCalcul = `Consultation page d'accueil.`;
+    } else {
+      detailsCalcul = `Onglet actif: ${currentPage}`;
+    }
+
+    try {
+      await api.submitAnomalie({
+        nom: bugName,
+        email: bugEmail,
+        typeAnomalie: bugType,
+        description: bugDescription,
+        detailsCalcul
+      });
+      setBugSuccess(true);
+      triggerToast("Signalement envoyé avec succès ! Merci pour votre aide.");
+      setTimeout(() => {
+        setBugName('');
+        setBugEmail('');
+        setBugDescription('');
+        setBugType('calcul');
+        setBugSuccess(false);
+        setIsBugModalOpen(false);
+      }, 2000);
+    } catch (err: any) {
+      setBugError(err.message || "Échec de l'envoi du signalement.");
+    } finally {
+      setIsSubmittingBug(false);
+    }
   };
 
   // Retrieve session history
@@ -580,6 +642,16 @@ Web App IRSA Madagascar`;
               className="hidden sm:flex px-4 py-2 text-xs font-semibold uppercase tracking-wider bg-gradient-to-r from-[#7C3AED] to-[#6366F1] hover:opacity-95 text-white rounded-xl transition-all shadow-md cursor-pointer"
             >
               Calculer IRSA
+            </button>
+
+            {/* Mobile Menu Button - visible only on mobile */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-bg-card)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-all cursor-pointer"
+              aria-label="Menu"
+            >
+              <Menu className="w-4 h-4 text-purple-400" />
+              <span className="text-xs font-semibold font-display">Menu</span>
             </button>
           </div>
         </div>
@@ -1919,86 +1991,289 @@ Web App IRSA Madagascar`;
       </main>
 
       {/* Persistent Beautiful Footer */}
-      <footer className="w-full mt-12 border-t border-[var(--color-border-subtle)] bg-[var(--color-bg-primary)] py-8 transition-colors">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[var(--color-text-secondary)]">
-          <div className="flex flex-col gap-1 text-center md:text-left">
-            <p className="font-display font-bold text-white">IRSA Madagascar © 2026</p>
-            <p className="font-light">Outil indépendant d'aide au calcul et de simulation fiscale.</p>
+      <footer className="w-full py-8 border-t border-[var(--color-border-subtle)] bg-[var(--color-bg-card)]/50 text-xs text-[var(--color-text-secondary)] transition-colors mt-auto relative z-10">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex flex-col gap-1.5 text-center md:text-left">
+            <p className="font-display font-medium text-[var(--color-text-primary)]">
+              Formule standard © 2026 <span className="text-[#C084FC] font-semibold">[roni ratsimbazafy]</span>
+            </p>
+            <p className="text-[11px] text-[var(--color-text-muted)]">
+              Impôt IRSA Madagascar • Portail indépendant d'aide au calcul et de simulation fiscale.
+            </p>
           </div>
-          <div className="flex gap-4">
-            <button onClick={() => setCurrentPage('guide')} className="hover:text-white transition-colors cursor-pointer">CGI République de Madagascar</button>
-            <span className="text-zinc-700">|</span>
-            <button onClick={() => setCurrentPage('admin')} className="hover:text-white transition-colors cursor-pointer inline-flex items-center gap-1">
-              <Settings className="w-3.5 h-3.5" /> Administration
+          
+          {/* Support and quick actions */}
+          <div className="flex flex-wrap items-center justify-center gap-4 md:gap-6">
+            <button
+              onClick={() => setIsBugModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/15 border border-rose-500/20 text-rose-400 font-semibold transition-all cursor-pointer"
+            >
+              <Bug className="w-3.5 h-3.5" /> Signaler une anomalie
             </button>
-            <span className="text-zinc-700">|</span>
-            <button onClick={() => setCurrentPage('calculateur')} className="hover:text-white transition-colors cursor-pointer">Calculateur en ligne</button>
+
+            <a
+              href="mailto:roniratsimba@gmail.com?subject=Retour%20Utilisateur%20-%20Calculateur%20IRSA"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[var(--color-text-primary)] hover:text-white font-medium transition-all cursor-pointer"
+            >
+              <Mail className="w-3.5 h-3.5" /> Support & Contact : roniratsimba@gmail.com
+            </a>
+
+            <span className="text-zinc-700 hidden sm:inline">|</span>
+
+            <div className="flex gap-4">
+              <button onClick={() => setCurrentPage('guide')} className="hover:text-[var(--color-text-primary)] text-[var(--color-text-secondary)] transition-colors cursor-pointer">Guide Fiscal</button>
+              <button onClick={() => setCurrentPage('admin')} className="hover:text-[var(--color-text-primary)] text-[var(--color-text-secondary)] transition-colors cursor-pointer inline-flex items-center gap-1">
+                <Settings className="w-3 h-3" /> Admin
+              </button>
+            </div>
           </div>
         </div>
       </footer>
 
-      {/* Sticky Mobile Bottom Navigation Bar */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0A0A0F]/85 backdrop-blur-xl border-t border-white/5 px-2 py-2 flex justify-around items-center shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
-        <button
-          onClick={() => setCurrentPage('home')}
-          className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all cursor-pointer ${
-            currentPage === 'home'
-              ? 'text-[#C084FC]'
-              : 'text-[var(--color-text-secondary)]/70 hover:text-white'
-          }`}
-        >
-          <Home className="w-5 h-5" />
-          <span className="text-[9px] font-medium font-display uppercase tracking-wider">Accueil</span>
-        </button>
+      {/* Mobile Menu Overlay/Sidebar */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <div className="fixed inset-0 z-50 md:hidden">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="absolute inset-0 bg-[#060608]/85 backdrop-blur-md"
+            />
+            
+            {/* Drawer Sidebar */}
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="absolute top-0 right-0 bottom-0 w-4/5 max-w-sm bg-[#0C0C12] border-l border-white/5 shadow-2xl p-6 flex flex-col justify-between"
+            >
+              <div className="flex flex-col gap-8">
+                {/* Header of Drawer */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#7C3AED] to-[#6366F1] flex items-center justify-center text-white">
+                      <Calculator className="w-4.5 h-4.5" />
+                    </div>
+                    <span className="font-display font-bold text-sm tracking-tight text-white">
+                      Navigation IRSA
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="p-1.5 rounded-lg bg-white/5 text-zinc-400 hover:text-white"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
 
-        <button
-          onClick={() => setCurrentPage('calculateur')}
-          className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all cursor-pointer ${
-            currentPage === 'calculateur'
-              ? 'text-[#C084FC]'
-              : 'text-[var(--color-text-secondary)]/70 hover:text-white'
-          }`}
-        >
-          <Calculator className="w-5 h-5" />
-          <span className="text-[9px] font-medium font-display uppercase tracking-wider">Calcul</span>
-        </button>
+                {/* Navigation Links inside Drawer */}
+                <div className="flex flex-col gap-2">
+                  {[
+                    { id: 'home', label: 'Accueil', icon: Home },
+                    { id: 'calculateur', label: 'Calculateur IRSA', icon: Calculator },
+                    { id: 'guide', label: 'Guide IRSA', icon: BookOpen },
+                    { id: 'historique', label: 'Historique des calculs', icon: History },
+                    { id: 'admin', label: 'Barème & Administration', icon: Settings }
+                  ].map((item) => {
+                    const IconComponent = item.icon;
+                    const isActive = currentPage === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          setCurrentPage(item.id as any);
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
+                          isActive
+                            ? 'bg-gradient-to-r from-[#7C3AED]/20 to-[#6366F1]/20 text-[#C084FC] border border-[#7C3AED]/30'
+                            : 'text-[var(--color-text-secondary)] hover:text-white hover:bg-white/5 border border-transparent'
+                        }`}
+                      >
+                        <IconComponent className="w-4.5 h-4.5" />
+                        <span>{item.label}</span>
+                        {isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#C084FC]" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-        <button
-          onClick={() => setCurrentPage('guide')}
-          className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all cursor-pointer ${
-            currentPage === 'guide'
-              ? 'text-[#C084FC]'
-              : 'text-[var(--color-text-secondary)]/70 hover:text-white'
-          }`}
-        >
-          <BookOpen className="w-5 h-5" />
-          <span className="text-[9px] font-medium font-display uppercase tracking-wider">Guide</span>
-        </button>
+              {/* Drawer Footer Actions */}
+              <div className="flex flex-col gap-4 border-t border-white/5 pt-6">
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    setIsBugModalOpen(true);
+                  }}
+                  className="w-full flex items-center justify-center gap-2 py-3 bg-rose-500/10 hover:bg-rose-500/15 border border-rose-500/20 text-rose-400 text-xs font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+                >
+                  <Bug className="w-4 h-4" /> Signaler une anomalie
+                </button>
 
-        <button
-          onClick={() => setCurrentPage('historique')}
-          className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all cursor-pointer ${
-            currentPage === 'historique'
-              ? 'text-[#C084FC]'
-              : 'text-[var(--color-text-secondary)]/70 hover:text-white'
-          }`}
-        >
-          <History className="w-5 h-5" />
-          <span className="text-[9px] font-medium font-display uppercase tracking-wider">Historique</span>
-        </button>
+                <div className="text-center text-[10px] text-[var(--color-text-muted)] font-mono">
+                  Formule standard © 2026
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
-        <button
-          onClick={() => setCurrentPage('admin')}
-          className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all cursor-pointer ${
-            currentPage === 'admin'
-              ? 'text-[#C084FC]'
-              : 'text-[var(--color-text-secondary)]/70 hover:text-white'
-          }`}
-        >
-          <Settings className="w-5 h-5" />
-          <span className="text-[9px] font-medium font-display uppercase tracking-wider">Barème</span>
-        </button>
-      </div>
+      {/* Bug Report / Anomaly Signalement Modal */}
+      <AnimatePresence>
+        {isBugModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsBugModalOpen(false)}
+              className="absolute inset-0 bg-[#060608]/85 backdrop-blur-md"
+            />
+
+            {/* Modal Body */}
+            <motion.div
+              initial={{ scale: 0.95, y: 15, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.95, y: -15, opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="relative w-full max-w-lg bg-[#0C0C14] border border-white/10 rounded-2xl shadow-2xl p-6 overflow-hidden max-h-[95vh] flex flex-col"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center">
+                    <Bug className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-display font-bold text-white">Signaler une anomalie</h2>
+                    <p className="text-[10px] text-[var(--color-text-muted)]">Rapporter un bug de calcul ou une anomalie technique</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsBugModalOpen(false)}
+                  className="p-1.5 rounded-lg bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
+                >
+                  <X className="w-4.5 h-4.5" />
+                </button>
+              </div>
+
+              {/* Form Content */}
+              <form onSubmit={handleBugSubmit} className="flex-1 overflow-y-auto pr-1 py-4 flex flex-col gap-4">
+                {bugSuccess ? (
+                  <div className="py-8 flex flex-col items-center text-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                      <Check className="w-6 h-6" />
+                    </div>
+                    <p className="text-sm font-semibold text-white">Signalement envoyé avec succès !</p>
+                    <p className="text-xs text-[var(--color-text-secondary)] px-6 leading-relaxed">
+                      Merci pour votre retour. Notre équipe va analyser cette anomalie fiscale au plus vite.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Name input */}
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] uppercase tracking-wider font-semibold text-[var(--color-text-secondary)]">Votre Nom</label>
+                        <input
+                          type="text"
+                          placeholder="Ex: Roni"
+                          value={bugName}
+                          onChange={(e) => setBugName(e.target.value)}
+                          className="h-10 px-3 bg-white/5 border border-white/10 focus:border-[#7C3AED]/50 rounded-xl text-xs text-white focus:outline-none"
+                        />
+                      </div>
+
+                      {/* Email input */}
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] uppercase tracking-wider font-semibold text-[var(--color-text-secondary)]">Votre Email</label>
+                        <input
+                          type="email"
+                          placeholder="Ex: roni@example.com"
+                          value={bugEmail}
+                          onChange={(e) => setBugEmail(e.target.value)}
+                          className="h-10 px-3 bg-white/5 border border-white/10 focus:border-[#7C3AED]/50 rounded-xl text-xs text-white focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Bug Type selector */}
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] uppercase tracking-wider font-semibold text-[var(--color-text-secondary)]">Type d'Anomalie</label>
+                      <select
+                        value={bugType}
+                        onChange={(e) => setBugType(e.target.value)}
+                        className="h-10 px-3 bg-[#0C0C14] border border-white/10 focus:border-[#7C3AED]/50 rounded-xl text-xs text-white focus:outline-none"
+                      >
+                        <option value="calcul">Erreur dans le calcul d'impôt (IRSA)</option>
+                        <option value="charges">Problème sur les déductions familiales</option>
+                        <option value="cnaps_ostie">Erreur sur le calcul CNaPS/OSTIE</option>
+                        <option value="affichage">Problème d'affichage ou de mise en page</option>
+                        <option value="autre">Autre anomalie technique</option>
+                      </select>
+                    </div>
+
+                    {/* Description */}
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] uppercase tracking-wider font-semibold text-[var(--color-text-secondary)]">Description de l'anomalie *</label>
+                      <textarea
+                        rows={4}
+                        placeholder="Veuillez décrire le problème de calcul ou technique rencontré..."
+                        value={bugDescription}
+                        onChange={(e) => setBugDescription(e.target.value)}
+                        className="p-3 bg-white/5 border border-white/10 focus:border-[#7C3AED]/50 rounded-xl text-xs text-white focus:outline-none resize-none"
+                        required
+                      />
+                    </div>
+
+                    {/* Context info banner */}
+                    {currentPage === 'calculateur' && (
+                      <div className="p-3 bg-[#7C3AED]/10 border border-[#7C3AED]/20 rounded-xl text-[10px] text-[var(--color-text-secondary)] flex items-start gap-2">
+                        <Info className="w-4 h-4 shrink-0 text-purple-400" />
+                        <div>
+                          <span className="font-semibold text-white">Capture de contexte :</span> Vos paramètres de calcul actuels (Brut : {salaireBrut} Ar, Net cible : {salaireNetCible} Ar) seront joints pour aider notre diagnostic.
+                        </div>
+                      </div>
+                    )}
+
+                    {bugError && (
+                      <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs rounded-xl flex items-center gap-1.5">
+                        <AlertTriangle className="w-4 h-4 shrink-0" />
+                        <span>{bugError}</span>
+                      </div>
+                    )}
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-3 justify-end border-t border-white/5 pt-4 mt-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsBugModalOpen(false)}
+                        className="px-4 py-2.5 border border-white/10 bg-white/5 hover:bg-white/10 text-white text-xs font-semibold rounded-xl transition-all cursor-pointer"
+                      >
+                        Annuler
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isSubmittingBug}
+                        className="px-5 py-2.5 bg-gradient-to-r from-rose-500 to-indigo-600 hover:opacity-95 text-white text-xs font-semibold rounded-xl transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                      >
+                        {isSubmittingBug ? "Envoi..." : "Envoyer le rapport"}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Floating Interactive Toast Feedback Notification */}
       <AnimatePresence>

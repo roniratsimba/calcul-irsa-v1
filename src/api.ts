@@ -4,7 +4,8 @@ import {
   ComparaisonResult,
   BaremeIRSA,
   CalculIRSADbRecord,
-  StatsAgregees
+  StatsAgregees,
+  AnomalieRecord
 } from './types';
 
 // Get or create unique sessionId in localStorage for anonymous user histories
@@ -173,6 +174,23 @@ export const api = {
     if (!response.ok) {
       const errData = await response.json().catch(() => ({}));
       throw new Error(errData.error || 'Mise à jour du barème échouée.');
+    }
+    return response.json();
+  },
+
+  // Submit calculation bug or anomaly report
+  async submitAnomalie(record: AnomalieRecord): Promise<{ success: boolean; anomalie: AnomalieRecord }> {
+    const response = await fetch('/api/irsa/anomalies', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(record)
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.error || "Échec de l'enregistrement du signalement d'anomalie.");
     }
     return response.json();
   }
