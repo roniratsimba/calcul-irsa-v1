@@ -1,0 +1,6 @@
+{
+  "name": "Calculateur IRSA Madagascar",
+  "description": "Application web full-stack moderne pour le calcul, la simulation et l'optimisation de l'IRSA (Impôt sur les Revenus Salariaux et Assimilés) à Madagascar avec barème 2026.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
