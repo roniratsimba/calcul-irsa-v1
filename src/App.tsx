@@ -11,10 +11,10 @@ export default function App() {
 
   // Calculator state
   const [calcMode, setCalcMode] = useState<CalcModeType>('brutToNet');
-  const [salaireBrut, setSalaireBrut] = useState<number>(500000);
-  const [salaireNet, setSalaireNet] = useState<number>(400000);
+  const [salaireBrut, setSalaireBrut] = useState<string>('500000');
+  const [salaireNet, setSalaireNet] = useState<string>('400000');
   const [avecSanitaire, setAvecSanitaire] = useState<boolean>(true);
-  const [nombreEnfants, setNombreEnfants] = useState<number>(0);
+  const [nombreEnfants, setNombreEnfants] = useState<string>('0');
   const [resultat, setResultat] = useState<IRSAResultat | null>(null);
 
   // Feedback form state
@@ -36,18 +36,23 @@ export default function App() {
   }, [isDarkMode]);
 
   const handleCalcul = () => {
+    const brutValue = parseFloat(salaireBrut) || 0;
+    const netValue = parseFloat(salaireNet) || 0;
+    const enfantsValue = parseInt(nombreEnfants) || 0;
+    
     if (calcMode === 'brutToNet') {
-      const cotisations = calculerCotisations(salaireBrut, avecSanitaire);
-      const result = calculerIRSA(salaireBrut, cotisations.cnaps, cotisations.sanitaire, nombreEnfants);
+      const cotisations = calculerCotisations(brutValue, avecSanitaire);
+      const result = calculerIRSA(brutValue, cotisations.cnaps, cotisations.sanitaire, enfantsValue);
       setResultat(result);
     } else {
-      const result = calculerDepuisNet(salaireNet, avecSanitaire, nombreEnfants);
+      const result = calculerDepuisNet(netValue, avecSanitaire, enfantsValue);
       setResultat(result);
     }
   };
 
-  const formatAr = (num: number) => {
-    return Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' Ar';
+  const formatAr = (num: number, round: boolean = false) => {
+    const value = round ? Math.round(num) : num;
+    return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' Ar';
   };
 
   const handleFeedbackSubmit = async (e: React.FormEvent) => {
@@ -81,18 +86,13 @@ export default function App() {
   };
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900' : 'bg-gradient-to-br from-slate-50 via-purple-50 to-slate-50'} ${isDarkMode ? 'text-white' : 'text-slate-900'} transition-colors duration-300`}>
+    <div className={`min-h-screen ${isDarkMode ? 'bg-slate-900' : 'bg-slate-50'} ${isDarkMode ? 'text-white' : 'text-slate-900'} transition-colors duration-300`}>
       <div className="container mx-auto px-4 py-8 max-w-5xl">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-purple-500/30">
-              <Calculator className="w-6 h-6 text-white" />
-            </div>
-            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">
-              Calculateur IRSA Madagascar
-            </h1>
-          </div>
+          <h1 className={`text-3xl md:text-4xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'} mb-4`}>
+            Calculateur IRSA Madagascar
+          </h1>
           <p className={`text-sm md:text-base ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
             Conforme à la Loi de Finances 2026
           </p>
@@ -105,7 +105,7 @@ export default function App() {
               onClick={() => setActiveTab('calculator')}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all ${
                 activeTab === 'calculator'
-                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg'
+                  ? 'bg-purple-600 text-white shadow-lg'
                   : isDarkMode
                   ? 'text-slate-400 hover:text-white hover:bg-slate-700/50'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
@@ -119,7 +119,7 @@ export default function App() {
               onClick={() => setActiveTab('guide')}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all ${
                 activeTab === 'guide'
-                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg'
+                  ? 'bg-purple-600 text-white shadow-lg'
                   : isDarkMode
                   ? 'text-slate-400 hover:text-white hover:bg-slate-700/50'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
@@ -133,7 +133,7 @@ export default function App() {
               onClick={() => setActiveTab('feedback')}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all ${
                 activeTab === 'feedback'
-                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg'
+                  ? 'bg-purple-600 text-white shadow-lg'
                   : isDarkMode
                   ? 'text-slate-400 hover:text-white hover:bg-slate-700/50'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
@@ -203,7 +203,7 @@ export default function App() {
                   <input
                     type="number"
                     value={calcMode === 'brutToNet' ? salaireBrut : salaireNet}
-                    onChange={(e) => calcMode === 'brutToNet' ? setSalaireBrut(Number(e.target.value)) : setSalaireNet(Number(e.target.value))}
+                    onChange={(e) => calcMode === 'brutToNet' ? setSalaireBrut(e.target.value) : setSalaireNet(e.target.value)}
                     className={`w-full px-4 py-3 ${isDarkMode ? 'bg-slate-900/50 border-slate-600 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'} rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all`}
                     placeholder={calcMode === 'brutToNet' ? 'Ex: 500000' : 'Ex: 400000'}
                   />
@@ -217,7 +217,7 @@ export default function App() {
                   <input
                     type="number"
                     value={nombreEnfants}
-                    onChange={(e) => setNombreEnfants(Number(e.target.value))}
+                    onChange={(e) => setNombreEnfants(e.target.value)}
                     min="0"
                     className={`w-full px-4 py-3 ${isDarkMode ? 'bg-slate-900/50 border-slate-600 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'} rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all`}
                     placeholder="Ex: 2"
@@ -234,7 +234,7 @@ export default function App() {
                         <p className={`text-sm ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>1% du salaire brut (obligatoire, plafonné à 2 400 000 Ar)</p>
                       </div>
                       <span className={`font-bold ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`}>
-                        {formatAr(calculerCotisations(calcMode === 'brutToNet' ? salaireBrut : salaireNet * 1.2, true).cnaps)}
+                        {formatAr(calculerCotisations(calcMode === 'brutToNet' ? parseFloat(salaireBrut) || 0 : (parseFloat(salaireNet) || 0) * 1.2, true).cnaps)}
                       </span>
                     </div>
                   </div>
@@ -250,7 +250,7 @@ export default function App() {
                       </div>
                       <div className="flex items-center gap-4">
                         <span className={`font-bold ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`}>
-                          {avecSanitaire ? formatAr(calculerCotisations(calcMode === 'brutToNet' ? salaireBrut : salaireNet * 1.2, true).sanitaire) : '0 Ar'}
+                          {avecSanitaire ? formatAr(calculerCotisations(calcMode === 'brutToNet' ? parseFloat(salaireBrut) || 0 : (parseFloat(salaireNet) || 0) * 1.2, true).sanitaire) : '0 Ar'}
                         </span>
                         <label className="relative inline-flex items-center cursor-pointer">
                           <input
@@ -269,7 +269,7 @@ export default function App() {
 
               <button
                 onClick={handleCalcul}
-                className="w-full px-6 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/30 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+                className="w-full px-6 py-4 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98]"
               >
                 {calcMode === 'brutToNet' ? 'Calculer l\'IRSA' : 'Calculer le salaire brut'}
               </button>
@@ -280,7 +280,7 @@ export default function App() {
                   <h3 className={`text-2xl font-bold ${isDarkMode ? 'text-purple-300' : 'text-purple-700'}`}>Résultat du calcul</h3>
                   
                   {/* Carte principale - Salaire Net */}
-                  <div className={`bg-gradient-to-br from-purple-600 to-indigo-600 rounded-2xl p-8 shadow-2xl shadow-purple-500/30`}>
+                  <div className={`bg-purple-600 rounded-2xl p-8 shadow-2xl`}>
                     <div className="text-center">
                       <p className="text-purple-200 text-sm font-medium mb-2">
                         {calcMode === 'brutToNet' ? 'Salaire Net Final' : 'Salaire Brut Calculé'}
@@ -366,8 +366,8 @@ export default function App() {
                             <tr key={idx} className={`border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-100'} hover:${isDarkMode ? 'bg-slate-800/50' : 'bg-slate-50'} transition-colors`}>
                               <td className={`py-3 px-4 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{tranche.label}</td>
                               <td className={`py-3 px-4 text-right font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{(tranche.taux * 100).toFixed(0)}%</td>
-                              <td className={`py-3 px-4 text-right ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{formatAr(tranche.imposable)}</td>
-                              <td className={`py-3 px-4 text-right font-semibold ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`}>{formatAr(tranche.impot)}</td>
+                              <td className={`py-3 px-4 text-right ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{formatAr(tranche.imposable, true)}</td>
+                              <td className={`py-3 px-4 text-right font-semibold ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`}>{formatAr(tranche.impot, true)}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -605,7 +605,7 @@ export default function App() {
 
                   <button
                     type="submit"
-                    className="w-full px-6 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/30 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+                    className="w-full px-6 py-4 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98]"
                   >
                     Envoyer le message
                   </button>

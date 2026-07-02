@@ -69,8 +69,8 @@ export function calculerIRSA(
   const baseImposableBrute = salaireBrut - cnaps - sanitaire;
   const baseImposableBruteCalc = Math.max(0, baseImposableBrute);
 
-  // Arrondi légal à la centaine d'Ariary inférieure
-  // Ex: 450 175 Ar devient 450 100 Ar
+  // Arrondi légal à la centaine d'Ariary inférieure (art. 01.03.10 du CGI malgache)
+  // Ex: 3 957 972 Ar devient 3 957 900 Ar
   const baseImposable = Math.floor(baseImposableBruteCalc / 100) * 100;
 
   // Calcul de l'IRSA brut par tranches progressives
@@ -97,7 +97,7 @@ export function calculerIRSA(
     
     // Calculer le montant imposable dans cette tranche
     const montantImposable = Math.min(baseImposable, trancheMax) - trancheMin;
-    const impotTranche = Math.round(montantImposable * tranche.taux);
+    const impotTranche = montantImposable * tranche.taux;
 
     irsaBrut += impotTranche;
 
