@@ -624,14 +624,6 @@ export default function App() {
               Cet outil est fourni à titre indicatif. Les résultats sont conformes à la Loi de Finances 2026 
               mais ne remplacent pas un calcul officiel par la DGI ou un expert-comptable.
             </p>
-            <a 
-              href="https://github.com/roniratsimba/calcul-irsa-v1" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className={`mt-3 inline-block ${isDarkMode ? 'text-purple-400 hover:text-purple-300' : 'text-purple-600 hover:text-purple-700'}`}
-            >
-              Voir sur GitHub →
-            </a>
           </div>
         </footer>
       </div>
