@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Calculator, Info, MessageSquare, Moon, Sun } from 'lucide-react';
-import { calculerIRSA, IRSAResultat } from './irsaCalculator';
+import { Calculator, Info, MessageSquare, Moon, Sun, ArrowRightLeft } from 'lucide-react';
+import { calculerIRSA, calculerDepuisNet, calculerCotisations, IRSAResultat } from './irsaCalculator';
 
 type TabType = 'calculator' | 'guide' | 'feedback';
+type CalcModeType = 'brutToNet' | 'netToBrut';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabType>('calculator');
   const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
 
   // Calculator state
+  const [calcMode, setCalcMode] = useState<CalcModeType>('brutToNet');
   const [salaireBrut, setSalaireBrut] = useState<number>(500000);
+  const [salaireNet, setSalaireNet] = useState<number>(400000);
   const [avecSanitaire, setAvecSanitaire] = useState<boolean>(true);
   const [nombreEnfants, setNombreEnfants] = useState<number>(0);
   const [resultat, setResultat] = useState<IRSAResultat | null>(null);
@@ -33,10 +36,14 @@ export default function App() {
   }, [isDarkMode]);
 
   const handleCalcul = () => {
-    const cnaps = salaireBrut * 0.01; // 1% fixe
-    const sanitaire = avecSanitaire ? salaireBrut * 0.01 : 0; // 1% si applicable
-    const result = calculerIRSA(salaireBrut, cnaps, sanitaire, nombreEnfants);
-    setResultat(result);
+    if (calcMode === 'brutToNet') {
+      const cotisations = calculerCotisations(salaireBrut, avecSanitaire);
+      const result = calculerIRSA(salaireBrut, cotisations.cnaps, cotisations.sanitaire, nombreEnfants);
+      setResultat(result);
+    } else {
+      const result = calculerDepuisNet(salaireNet, avecSanitaire, nombreEnfants);
+      setResultat(result);
+    }
   };
 
   const formatAr = (num: number) => {
@@ -155,20 +162,50 @@ export default function App() {
           {/* Calculator Tab */}
           {activeTab === 'calculator' && (
             <div className={`${isDarkMode ? 'bg-slate-800/50 backdrop-blur-sm border border-slate-700/50' : 'bg-white/80 backdrop-blur-sm border border-slate-200/50'} rounded-2xl p-6 md:p-8 shadow-xl`}>
-              <h2 className={`text-xl font-semibold mb-6 ${isDarkMode ? 'text-purple-300' : 'text-purple-700'}`}>Calculateur IRSA</h2>
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+                <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-purple-300' : 'text-purple-700'}`}>Calculateur IRSA</h2>
+                
+                {/* Mode Switch */}
+                <div className={`mt-4 md:mt-0 inline-flex p-1 rounded-xl ${isDarkMode ? 'bg-slate-900/50' : 'bg-slate-100'}`}>
+                  <button
+                    onClick={() => setCalcMode('brutToNet')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      calcMode === 'brutToNet'
+                        ? 'bg-purple-600 text-white shadow-md'
+                        : isDarkMode
+                        ? 'text-slate-400 hover:text-white'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Brut → Net
+                  </button>
+                  <button
+                    onClick={() => setCalcMode('netToBrut')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      calcMode === 'netToBrut'
+                        ? 'bg-purple-600 text-white shadow-md'
+                        : isDarkMode
+                        ? 'text-slate-400 hover:text-white'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Net → Brut
+                  </button>
+                </div>
+              </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                {/* Salaire Brut */}
+                {/* Salaire Input (Brut or Net based on mode) */}
                 <div>
                   <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                    Salaire Brut (Ar)
+                    {calcMode === 'brutToNet' ? 'Salaire Brut (Ar)' : 'Salaire Net souhaité (Ar)'}
                   </label>
                   <input
                     type="number"
-                    value={salaireBrut}
-                    onChange={(e) => setSalaireBrut(Number(e.target.value))}
+                    value={calcMode === 'brutToNet' ? salaireBrut : salaireNet}
+                    onChange={(e) => calcMode === 'brutToNet' ? setSalaireBrut(Number(e.target.value)) : setSalaireNet(Number(e.target.value))}
                     className={`w-full px-4 py-3 ${isDarkMode ? 'bg-slate-900/50 border-slate-600 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'} rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all`}
-                    placeholder="Ex: 500000"
+                    placeholder={calcMode === 'brutToNet' ? 'Ex: 500000' : 'Ex: 400000'}
                   />
                 </div>
 
@@ -194,9 +231,11 @@ export default function App() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className={`font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Cotisation CNaPS</p>
-                        <p className={`text-sm ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>1% du salaire brut (obligatoire)</p>
+                        <p className={`text-sm ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>1% du salaire brut (obligatoire, plafonné à 2 400 000 Ar)</p>
                       </div>
-                      <span className={`font-bold ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`}>{formatAr(salaireBrut * 0.01)}</span>
+                      <span className={`font-bold ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`}>
+                        {formatAr(calculerCotisations(calcMode === 'brutToNet' ? salaireBrut : salaireNet * 1.2, true).cnaps)}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -207,11 +246,11 @@ export default function App() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className={`font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Cotisation Sanitaire (OSTIE)</p>
-                        <p className={`text-sm ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>1% du salaire brut (optionnel)</p>
+                        <p className={`text-sm ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>1% du salaire brut (optionnel, plafonné à 2 400 000 Ar)</p>
                       </div>
                       <div className="flex items-center gap-4">
                         <span className={`font-bold ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`}>
-                          {avecSanitaire ? formatAr(salaireBrut * 0.01) : '0 Ar'}
+                          {avecSanitaire ? formatAr(calculerCotisations(calcMode === 'brutToNet' ? salaireBrut : salaireNet * 1.2, true).sanitaire) : '0 Ar'}
                         </span>
                         <label className="relative inline-flex items-center cursor-pointer">
                           <input
@@ -232,87 +271,103 @@ export default function App() {
                 onClick={handleCalcul}
                 className="w-full px-6 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/30 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
               >
-                Calculer l'IRSA
+                {calcMode === 'brutToNet' ? 'Calculer l\'IRSA' : 'Calculer le salaire brut'}
               </button>
 
               {/* Résultats */}
               {resultat && (
-                <div className="mt-8 space-y-6">
-                  <h3 className={`text-xl font-semibold ${isDarkMode ? 'text-purple-300' : 'text-purple-700'}`}>Résultat du calcul</h3>
+                <div className="mt-10 space-y-8">
+                  <h3 className={`text-2xl font-bold ${isDarkMode ? 'text-purple-300' : 'text-purple-700'}`}>Résultat du calcul</h3>
                   
-                  {/* Résumé principal */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className={`bg-gradient-to-br from-purple-500/20 to-indigo-500/20 rounded-xl p-5 border ${isDarkMode ? 'border-purple-500/30' : 'border-purple-500/40'}`}>
-                      <p className={`text-sm mb-1 ${isDarkMode ? 'text-purple-300' : 'text-purple-700'}`}>Base Imposable</p>
-                      <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{formatAr(resultat.baseImposable)}</p>
-                      <p className={`text-xs mt-1 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Arrondi à la centaine inf.</p>
-                    </div>
-                    <div className={`bg-gradient-to-br from-amber-500/20 to-orange-500/20 rounded-xl p-5 border ${isDarkMode ? 'border-amber-500/30' : 'border-amber-500/40'}`}>
-                      <p className={`text-sm mb-1 ${isDarkMode ? 'text-amber-300' : 'text-amber-700'}`}>IRSA Brut</p>
-                      <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{formatAr(resultat.irsaBrut)}</p>
-                    </div>
-                    <div className={`bg-gradient-to-br from-emerald-500/20 to-green-500/20 rounded-xl p-5 border ${isDarkMode ? 'border-emerald-500/30' : 'border-emerald-500/40'}`}>
-                      <p className={`text-sm mb-1 ${isDarkMode ? 'text-emerald-300' : 'text-emerald-700'}`}>IRSA Net à Payer</p>
-                      <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{formatAr(resultat.irsaNet)}</p>
+                  {/* Carte principale - Salaire Net */}
+                  <div className={`bg-gradient-to-br from-purple-600 to-indigo-600 rounded-2xl p-8 shadow-2xl shadow-purple-500/30`}>
+                    <div className="text-center">
+                      <p className="text-purple-200 text-sm font-medium mb-2">
+                        {calcMode === 'brutToNet' ? 'Salaire Net Final' : 'Salaire Brut Calculé'}
+                      </p>
+                      <p className="text-4xl md:text-5xl font-bold text-white">{formatAr(resultat.salaireNet)}</p>
+                      <p className="text-purple-200 text-xs mt-2">Après déductions et impôts</p>
                     </div>
                   </div>
 
-                  {/* Détails */}
-                  <div className={`rounded-xl p-5 ${isDarkMode ? 'bg-slate-900/50' : 'bg-slate-50'} space-y-3`}>
-                    <div className="flex justify-between items-center py-2 border-b border-slate-700">
-                      <span className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>Salaire Brut</span>
-                      <span className={`font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{formatAr(resultat.salaireBrut)}</span>
+                  {/* Résumé des montants clés */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className={`rounded-xl p-6 ${isDarkMode ? 'bg-slate-900/50 border border-slate-700' : 'bg-white border border-slate-200'} shadow-lg`}>
+                      <p className={`text-xs font-medium uppercase tracking-wider mb-2 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Base Imposable</p>
+                      <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{formatAr(resultat.baseImposable)}</p>
+                      <p className={`text-xs mt-1 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Arrondi à la centaine inf.</p>
                     </div>
-                    <div className="flex justify-between items-center py-2 border-b border-slate-700">
-                      <span className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>- Cotisation CNaPS (1%)</span>
-                      <span className={`font-semibold ${isDarkMode ? 'text-red-400' : 'text-red-600'}`}>-{formatAr(resultat.cnaps)}</span>
+                    <div className={`rounded-xl p-6 ${isDarkMode ? 'bg-slate-900/50 border border-slate-700' : 'bg-white border border-slate-200'} shadow-lg`}>
+                      <p className={`text-xs font-medium uppercase tracking-wider mb-2 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>IRSA Brut</p>
+                      <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{formatAr(resultat.irsaBrut)}</p>
+                      <p className={`text-xs mt-1 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Avant réduction famille</p>
                     </div>
-                    <div className="flex justify-between items-center py-2 border-b border-slate-700">
-                      <span className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>- Cotisation Sanitaire (1%)</span>
-                      <span className={`font-semibold ${isDarkMode ? 'text-red-400' : 'text-red-600'}`}>-{formatAr(resultat.sanitaire)}</span>
+                    <div className={`rounded-xl p-6 ${isDarkMode ? 'bg-slate-900/50 border border-slate-700' : 'bg-white border border-slate-200'} shadow-lg`}>
+                      <p className={`text-xs font-medium uppercase tracking-wider mb-2 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>IRSA Net</p>
+                      <p className={`text-2xl font-bold ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>{formatAr(resultat.irsaNet)}</p>
+                      <p className={`text-xs mt-1 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>À payer</p>
                     </div>
-                    <div className="flex justify-between items-center py-2 border-b border-slate-700">
-                      <span className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>= Base Imposable (arrondie)</span>
-                      <span className={`font-semibold ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`}>{formatAr(resultat.baseImposable)}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b border-slate-700">
-                      <span className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>IRSA Brut (progressif)</span>
-                      <span className={`font-semibold ${isDarkMode ? 'text-amber-400' : 'text-amber-600'}`}>{formatAr(resultat.irsaBrut)}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b border-slate-700">
-                      <span className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>- Réduction enfants ({nombreEnfants} × 2 000 Ar)</span>
-                      <span className={`font-semibold ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>-{formatAr(resultat.reductionEnfants)}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b border-slate-700">
-                      <span className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>= IRSA Net</span>
-                      <span className={`font-semibold ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>{formatAr(resultat.irsaNet)}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-2">
-                      <span className={`font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Salaire Net Final</span>
-                      <span className={`font-bold text-xl ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{formatAr(resultat.salaireNet)}</span>
+                  </div>
+
+                  {/* Détail du calcul */}
+                  <div className={`rounded-xl p-6 ${isDarkMode ? 'bg-slate-900/50 border border-slate-700' : 'bg-white border border-slate-200'} shadow-lg`}>
+                    <h4 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Détail du calcul</h4>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center py-3 border-b border-slate-700">
+                        <span className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>Salaire Brut</span>
+                        <span className={`font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{formatAr(resultat.salaireBrut)}</span>
+                      </div>
+                      <div className="flex justify-between items-center py-3 border-b border-slate-700">
+                        <span className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>- Cotisation CNaPS (1%)</span>
+                        <span className={`font-semibold ${isDarkMode ? 'text-red-400' : 'text-red-600'}`}>-{formatAr(resultat.cnaps)}</span>
+                      </div>
+                      <div className="flex justify-between items-center py-3 border-b border-slate-700">
+                        <span className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>- Cotisation Sanitaire (1%)</span>
+                        <span className={`font-semibold ${isDarkMode ? 'text-red-400' : 'text-red-600'}`}>-{formatAr(resultat.sanitaire)}</span>
+                      </div>
+                      <div className="flex justify-between items-center py-3 border-b border-slate-700">
+                        <span className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>= Base Imposable (arrondie)</span>
+                        <span className={`font-semibold ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`}>{formatAr(resultat.baseImposable)}</span>
+                      </div>
+                      <div className="flex justify-between items-center py-3 border-b border-slate-700">
+                        <span className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>IRSA Brut (progressif)</span>
+                        <span className={`font-semibold ${isDarkMode ? 'text-amber-400' : 'text-amber-600'}`}>{formatAr(resultat.irsaBrut)}</span>
+                      </div>
+                      <div className="flex justify-between items-center py-3 border-b border-slate-700">
+                        <span className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>- Réduction enfants ({nombreEnfants} × 2 000 Ar)</span>
+                        <span className={`font-semibold ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>-{formatAr(resultat.reductionEnfants)}</span>
+                      </div>
+                      <div className="flex justify-between items-center py-3 border-b border-slate-700">
+                        <span className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>= IRSA Net</span>
+                        <span className={`font-semibold ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>{formatAr(resultat.irsaNet)}</span>
+                      </div>
+                      <div className="flex justify-between items-center py-3">
+                        <span className={`font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Salaire Net Final</span>
+                        <span className={`font-bold text-xl ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{formatAr(resultat.salaireNet)}</span>
+                      </div>
                     </div>
                   </div>
 
                   {/* Détail des tranches */}
-                  <div>
+                  <div className={`rounded-xl p-6 ${isDarkMode ? 'bg-slate-900/50 border border-slate-700' : 'bg-white border border-slate-200'} shadow-lg`}>
                     <h4 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Détail par tranches</h4>
-                    <div className={`rounded-xl p-5 ${isDarkMode ? 'bg-slate-900/50' : 'bg-slate-50'}`}>
+                    <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
-                          <tr className="border-b border-slate-700">
-                            <th className={`text-left py-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Tranche</th>
-                            <th className={`text-right py-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Taux</th>
-                            <th className={`text-right py-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Imposable</th>
-                            <th className={`text-right py-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Impôt</th>
+                          <tr className={`border-b ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                            <th className={`text-left py-3 px-4 font-semibold ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Tranche</th>
+                            <th className={`text-right py-3 px-4 font-semibold ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Taux</th>
+                            <th className={`text-right py-3 px-4 font-semibold ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Imposable</th>
+                            <th className={`text-right py-3 px-4 font-semibold ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Impôt</th>
                           </tr>
                         </thead>
                         <tbody>
                           {resultat.detailTranches.map((tranche, idx) => (
-                            <tr key={idx} className="border-b border-slate-800">
-                              <td className={`py-2 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{tranche.label}</td>
-                              <td className={`py-2 text-right ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{(tranche.taux * 100).toFixed(0)}%</td>
-                              <td className={`py-2 text-right ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{formatAr(tranche.imposable)}</td>
-                              <td className={`py-2 text-right font-semibold ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`}>{formatAr(tranche.impot)}</td>
+                            <tr key={idx} className={`border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-100'} hover:${isDarkMode ? 'bg-slate-800/50' : 'bg-slate-50'} transition-colors`}>
+                              <td className={`py-3 px-4 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{tranche.label}</td>
+                              <td className={`py-3 px-4 text-right font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{(tranche.taux * 100).toFixed(0)}%</td>
+                              <td className={`py-3 px-4 text-right ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{formatAr(tranche.imposable)}</td>
+                              <td className={`py-3 px-4 text-right font-semibold ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`}>{formatAr(tranche.impot)}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -377,23 +432,27 @@ export default function App() {
                   <div className={`space-y-4 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
                     <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-slate-900/50' : 'bg-slate-50'}`}>
                       <h4 className={`font-semibold mb-2 ${isDarkMode ? 'text-purple-300' : 'text-purple-700'}`}>1. Base Imposable</h4>
-                      <p className="text-sm">La base imposable est calculée en déduisant du salaire brut les cotisations salariales obligatoires (CNaPS 1% et, si applicable, OSTIE 1%).</p>
+                      <p className="text-sm">La base imposable est calculée en déduisant du salaire brut les cotisations salariales obligatoires (CNaPS 1% et, si applicable, OSTIE 1%). Les cotisations sont plafonnées à 2 400 000 Ar de salaire brut.</p>
                     </div>
                     <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-slate-900/50' : 'bg-slate-50'}`}>
                       <h4 className={`font-semibold mb-2 ${isDarkMode ? 'text-purple-300' : 'text-purple-700'}`}>2. Arrondi Légal</h4>
-                      <p className="text-sm">La base imposable obtenue est obligatoirement arrondie à la centaine d'Ariary inférieure. Exemple : 450 175 Ar devient 450 100 Ar.</p>
+                      <p className="text-sm">La base imposable obtenue est obligatoirement arrondie à la centaine d'Ariary inférieure. Exemple : 450 175 Ar devient 450 100 Ar. Cette règle est conforme aux dispositions fiscales malgaches.</p>
                     </div>
                     <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-slate-900/50' : 'bg-slate-50'}`}>
                       <h4 className={`font-semibold mb-2 ${isDarkMode ? 'text-purple-300' : 'text-purple-700'}`}>3. Impôt Progressif par Tranches</h4>
-                      <p className="text-sm">L'IRSA est calculé selon un barème progressif : chaque tranche de revenu est taxée à un taux différent. Les tranches s'appliquent successivement.</p>
+                      <p className="text-sm">L'IRSA est calculé selon un barème progressif : chaque tranche de revenu est taxée à un taux différent. Les tranches s'appliquent successivement. Par exemple, un revenu de 500 000 Ar sera taxé à 0% sur les premiers 350 000 Ar, à 5% sur les 50 000 Ar suivants, et à 10% sur les 100 000 Ar restants.</p>
                     </div>
                     <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-slate-900/50' : 'bg-slate-50'}`}>
                       <h4 className={`font-semibold mb-2 ${isDarkMode ? 'text-purple-300' : 'text-purple-700'}`}>4. Minimum de Perception</h4>
-                      <p className="text-sm">L'impôt calculé ne peut jamais être inférieur à 3 000 Ar, sauf si le salaire imposable est strictement inférieur ou égal au seuil d'exonération de 350 000 Ar (auquel cas l'impôt est de 0 Ar).</p>
+                      <p className="text-sm">L'impôt calculé ne peut jamais être inférieur à 3 000 Ar (relèvement de 2 000 Ar en 2026), sauf si le salaire imposable est strictement inférieur ou égal au seuil d'exonération de 350 000 Ar (auquel cas l'impôt est de 0 Ar).</p>
                     </div>
                     <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-slate-900/50' : 'bg-slate-50'}`}>
                       <h4 className={`font-semibold mb-2 ${isDarkMode ? 'text-purple-300' : 'text-purple-700'}`}>5. Réduction pour Charges de Famille</h4>
-                      <p className="text-sm">Une réduction de 2 000 Ar par enfant à charge est appliquée sur l'impôt brut. Attention : même après réduction, l'IRSA net final ne peut pas descendre en dessous du minimum légal de 3 000 Ar.</p>
+                      <p className="text-sm">Une réduction de 2 000 Ar par enfant à charge est appliquée sur l'impôt brut. Attention : même après réduction, l'IRSA net final ne peut pas descendre en dessous du minimum légal de 3 000 Ar. Cette réduction s'applique aux enfants à charge légalement reconnus (jusqu'à 21 ans ou étudiants jusqu'à 25 ans).</p>
+                    </div>
+                    <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-slate-900/50' : 'bg-slate-50'}`}>
+                      <h4 className={`font-semibold mb-2 ${isDarkMode ? 'text-purple-300' : 'text-purple-700'}`}>6. Plafond des Cotisations</h4>
+                      <p className="text-sm">Les cotisations CNaPS et OSTIE sont calculées sur la base du salaire brut plafonné à 2 400 000 Ar. Au-delà de ce montant, aucune cotisation supplémentaire n'est due. Ce plafond s'applique mensuellement.</p>
                     </div>
                   </div>
                 </div>
@@ -405,17 +464,74 @@ export default function App() {
                     <ul className={`space-y-2 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
                       <li className="flex items-start gap-2">
                         <span className="text-purple-400 mt-1">•</span>
-                        <span>Introduction d'une nouvelle tranche à 25% pour les revenus supérieurs à 4 000 000 Ar</span>
+                        <span>Introduction d'une nouvelle tranche à 25% pour les revenus supérieurs à 4 000 000 Ar, visant à renforcer la progressivité de l'impôt.</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-purple-400 mt-1">•</span>
-                        <span>Relèvement du minimum de perception de 2 000 Ar à 3 000 Ar</span>
+                        <span>Relèvement du minimum de perception de 2 000 Ar à 3 000 Ar pour adapter le seuil minimum à l'inflation.</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-purple-400 mt-1">•</span>
-                        <span>Maintien de la réduction pour charges de famille à 2 000 Ar par enfant</span>
+                        <span>Maintien de la réduction pour charges de famille à 2 000 Ar par enfant, soutenant ainsi les familles.</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-purple-400 mt-1">•</span>
+                        <span>Confirmation du plafond de cotisations à 2 400 000 Ar pour les régimes de sécurité sociale.</span>
                       </li>
                     </ul>
+                  </div>
+                </div>
+
+                {/* Exemples de calcul */}
+                <div>
+                  <h3 className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Exemples de Calcul</h3>
+                  <div className={`space-y-4 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                    <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-slate-900/50' : 'bg-slate-50'}`}>
+                      <h4 className={`font-semibold mb-2 ${isDarkMode ? 'text-emerald-300' : 'text-emerald-700'}`}>Exemple 1 : Salaire de 500 000 Ar (sans enfant)</h4>
+                      <ul className="text-sm space-y-1 mt-2">
+                        <li>• Salaire brut : 500 000 Ar</li>
+                        <li>• CNaPS (1%) : -5 000 Ar</li>
+                        <li>• Base imposable : 495 000 Ar → 495 000 Ar (arrondi)</li>
+                        <li>• IRSA brut : (350 000 × 0%) + (50 000 × 5%) + (95 000 × 10%) = 12 000 Ar</li>
+                        <li>• IRSA net : 12 000 Ar (pas de réduction)</li>
+                        <li>• Salaire net : 500 000 - 5 000 - 12 000 = 483 000 Ar</li>
+                      </ul>
+                    </div>
+                    <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-slate-900/50' : 'bg-slate-50'}`}>
+                      <h4 className={`font-semibold mb-2 ${isDarkMode ? 'text-emerald-300' : 'text-emerald-700'}`}>Exemple 2 : Salaire de 500 000 Ar (avec 2 enfants)</h4>
+                      <ul className="text-sm space-y-1 mt-2">
+                        <li>• Salaire brut : 500 000 Ar</li>
+                        <li>• CNaPS (1%) : -5 000 Ar</li>
+                        <li>• Base imposable : 495 000 Ar</li>
+                        <li>• IRSA brut : 12 000 Ar</li>
+                        <li>• Réduction famille : -4 000 Ar (2 × 2 000)</li>
+                        <li>• IRSA net : 8 000 Ar</li>
+                        <li>• Salaire net : 500 000 - 5 000 - 8 000 = 487 000 Ar</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Foire aux questions */}
+                <div>
+                  <h3 className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Questions Fréquentes</h3>
+                  <div className={`space-y-4 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                    <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-slate-900/50' : 'bg-slate-50'}`}>
+                      <h4 className={`font-semibold mb-2 ${isDarkMode ? 'text-purple-300' : 'text-purple-700'}`}>Qu'est-ce que l'IRSA ?</h4>
+                      <p className="text-sm">L'IRSA (Impôt sur le Revenu Salarial et Assimilés) est un impôt progressif prélevé à la source sur les salaires et revenus assimilés à Madagascar. Il est calculé mensuellement par l'employeur.</p>
+                    </div>
+                    <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-slate-900/50' : 'bg-slate-50'}`}>
+                      <h4 className={`font-semibold mb-2 ${isDarkMode ? 'text-purple-300' : 'text-purple-700'}`}>Qui est exonéré d'IRSA ?</h4>
+                      <p className="text-sm">Les salariés dont la base imposable mensuelle est inférieure ou égale à 350 000 Ar sont exonérés d'IRSA et ne paient aucun impôt sur le revenu.</p>
+                    </div>
+                    <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-slate-900/50' : 'bg-slate-50'}`}>
+                      <h4 className={`font-semibold mb-2 ${isDarkMode ? 'text-purple-300' : 'text-purple-700'}`}>Comment déclarer ses enfants à charge ?</h4>
+                      <p className="text-sm">Les enfants à charge doivent être déclarés auprès de l'employeur avec les justificatifs nécessaires (acte de naissance, certificat de scolarité pour les étudiants). La réduction s'applique dès le mois suivant la déclaration.</p>
+                    </div>
+                    <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-slate-900/50' : 'bg-slate-50'}`}>
+                      <h4 className={`font-semibold mb-2 ${isDarkMode ? 'text-purple-300' : 'text-purple-700'}`}>La cotisation OSTIE est-elle obligatoire ?</h4>
+                      <p className="text-sm">La cotisation OSTIE (Organisation Sociale de Travail Indépendant et des Entreprises) est obligatoire pour les salariés du secteur privé. Elle est facultative pour certains régimes spécifiques. Vérifiez votre contrat de travail.</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -501,8 +617,22 @@ export default function App() {
         </main>
 
         {/* Footer */}
-        <footer className={`bottom-0 left-0 right-0 py-4 text-center text-sm ${isDarkMode ? 'bg-slate-900/90 border-t border-slate-800 text-slate-500' : 'bg-white/90 border-t border-slate-200 text-slate-600'} backdrop-blur-sm`}>
-          <p>- Fait par Roni Ratsimbazafy -</p>
+        <footer className={`mt-16 py-8 border-t ${isDarkMode ? 'border-slate-700/50 text-slate-500' : 'border-slate-200 text-slate-600'} text-center text-sm`}>
+          <div className="container mx-auto px-4">
+            <p>© 2026 Roni Ratsimbazafy • Calculateur IRSA Madagascar v1.0</p>
+            <p className="mt-2 text-xs">
+              Cet outil est fourni à titre indicatif. Les résultats sont conformes à la Loi de Finances 2026 
+              mais ne remplacent pas un calcul officiel par la DGI ou un expert-comptable.
+            </p>
+            <a 
+              href="https://github.com/roniratsimba/calcul-irsa-v1" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className={`mt-3 inline-block ${isDarkMode ? 'text-purple-400 hover:text-purple-300' : 'text-purple-600 hover:text-purple-700'}`}
+            >
+              Voir sur GitHub →
+            </a>
+          </div>
         </footer>
       </div>
     </div>
