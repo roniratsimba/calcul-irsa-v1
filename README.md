@@ -6,36 +6,12 @@ Application web locale pour le calcul de l'Impôt sur le Revenu Salarial et Assi
 
 Le Calculateur IRSA Madagascar est une application 100% locale qui permet de calculer rapidement et précisément l'IRSA selon le barème fiscal officiel de Madagascar pour l'année 2026. Aucune API externe ou connexion internet n'est requise pour le calcul.
 
-### ✨ Fonctionnalités
-
-- **Calculateur IRSA** : Formulaire simple pour saisir le salaire brut et les charges de famille
-- **Barème 2026** : Application automatique des nouvelles tranches d'imposition
-- **Arrondi légal** : Arrondi automatique à la centaine d'Ariary inférieure
-- **Guide complet** : Page d'information expliquant le fonctionnement de l'impôt
-- **Formulaire de contact** : Système de feedback intégré via Formspree
-- **Thème adaptatif** : Mode sombre/clair pour un confort visuel optimal
 
 ## 📊 Barème Fiscal 2026
 
-L'IRSA est calculé selon un barème progressif par tranches :
+L'IRSA est calculé selon un barème progressif par tranches
 
-| Tranche | Taux |
-|---------|------|
-| 0 à 350 000 Ar | 0% (Exonéré) |
-| 350 001 à 400 000 Ar | 5% |
-| 400 001 à 500 000 Ar | 10% |
-| 500 001 à 600 000 Ar | 15% |
-| 600 001 à 4 000 000 Ar | 20% |
-| Au-delà de 4 000 000 Ar | 25% |
-
-### Règles de calcul
-
-- **Minimum de perception** : 3 000 Ar (sauf si exonéré)
-- **Réduction charges de famille** : 2 000 Ar par enfant à charge
-- **Arrondi légal** : Base imposable arrondie à la centaine inférieure
-- **Cotisations déductibles** : CNaPS (1%) et OSTIE (1% si applicable)
-
-## 🚀 Installation et Lancement
+## Installation et lancement 
 
 **Prérequis :** Node.js
 
@@ -79,11 +55,6 @@ calcul-irsa-v1/
 - **Responsive** : Adapté mobile, tablette et desktop
 - **Performance** : Calcul instantané sans latence
 - **Sécurité** : Pas de stockage de données sensibles
-
-## 👤 Auteur
-
-**Roni Ratsimbazafy**
-Étudiant en Informatique
 
 ## 📄 Licence
 
