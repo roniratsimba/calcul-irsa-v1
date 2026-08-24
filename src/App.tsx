@@ -6,8 +6,9 @@ type TabType = 'calculator' | 'guide' | 'feedback';
 type CalcModeType = 'brutToNet' | 'netToBrut';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<TabType>('calculator');
+  const [activeTab, setActiveTab] = useState<TabType>('guide');
   const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Calculator state
   const [calcMode, setCalcMode] = useState<CalcModeType>('brutToNet');
@@ -34,6 +35,14 @@ export default function App() {
       root.classList.add('light');
     }
   }, [isDarkMode]);
+
+  // Loading simulation
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleCalcul = () => {
     const brutValue = parseFloat(salaireBrut) || 0;
@@ -86,7 +95,61 @@ export default function App() {
   };
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'bg-slate-900' : 'bg-slate-50'} ${isDarkMode ? 'text-white' : 'text-slate-900'} transition-colors duration-300`}>
+    <div 
+      className={`min-h-screen ${isDarkMode ? 'text-white' : 'text-slate-900'} transition-colors duration-300`}
+      style={{
+        backgroundImage: isDarkMode 
+          ? "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' version='1.1' xmlns:xlink='http://www.w3.org/1999/xlink' xmlns:svgjs='http://svgjs.dev/svgjs' width='1440' height='560' preserveAspectRatio='none' viewBox='0 0 1440 560'%3e%3cg mask='url(%26quot%3b%23SvgjsMask1000%26quot%3b)' fill='none'%3e%3crect width='1440' height='560' x='0' y='0' fill='%230e2a47'%3e%3c/rect%3e%3cpath d='M0%2c606.736C130.701%2c621.091%2c271.748%2c665.613%2c386.434%2c601.302C502.234%2c536.366%2c560.311%2c400.12%2c596.332%2c272.336C629.198%2c155.745%2c602.925%2c35.525%2c579.416%2c-83.307C557.061%2c-196.305%2c528.276%2c-306.299%2c463.074%2c-401.256C392.109%2c-504.606%2c314.556%2c-630.08%2c190.69%2c-649.429C66.444%2c-668.837%2c-37.154%2c-559.778%2c-145.744%2c-496.359C-229.522%2c-447.431%2c-310.234%2c-397.102%2c-370.943%2c-321.424C-429.934%2c-247.887%2c-469.415%2c-162.606%2c-487.675%2c-70.117C-506.677%2c26.127%2c-501.875%2c123.031%2c-477.453%2c218.045C-449.038%2c328.594%2c-423.995%2c449.951%2c-335.477%2c522.013C-244.183%2c596.334%2c-117.017%2c593.884%2c0%2c606.736' fill='%230b2239'%3e%3c/path%3e%3cpath d='M1440 1068.711C1570.607 1066.49 1703.255 1211.001 1816.2069999999999 1145.3890000000001 1927.722 1080.612 1892.941 907.346 1930.2939999999999 783.91 1961.779 679.864 2010.934 585.262 2018.519 476.822 2027.673 345.954 2073 184.399 1978.6 93.30099999999999 1882.329 0.3970000000000482 1718.7 82.351 1586.7640000000001 60.16699999999997 1475.917 41.528999999999996 1378.01-48.668000000000006 1267.875-26.202999999999975 1155.531-3.2870000000000346 1082.326 98.77499999999998 1001.043 179.64100000000002 913.33 266.905 785.146 341.063 774.788 464.35699999999997 764.411 587.88 903.822 668.724 950.3009999999999 783.638 999.948 906.384 941.049 1091.714 1055.478 1158.328 1171.57 1225.9099999999999 1305.689 1070.995 1440 1068.711' fill='%23113255'%3e%3c/path%3e%3c/g%3e%3cdefs%3e%3cmask id='SvgjsMask1000'%3e%3crect width='1440' height='560' fill='white'%3e%3c/rect%3e%3c/mask%3e%3c/defs%3e%3c/svg%3e\")"
+          : "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' version='1.1' xmlns:xlink='http://www.w3.org/1999/xlink' xmlns:svgjs='http://svgjs.dev/svgjs' width='1440' height='560' preserveAspectRatio='none' viewBox='0 0 1440 560'%3e%3cg mask='url(%26quot%3b%23SvgjsMask1000%26quot%3b)' fill='none'%3e%3crect width='1440' height='560' x='0' y='0' fill='%23f0f4f8'%3e%3c/rect%3e%3cpath d='M0%2c606.736C130.701%2c621.091%2c271.748%2c665.613%2c386.434%2c601.302C502.234%2c536.366%2c560.311%2c400.12%2c596.332%2c272.336C629.198%2c155.745%2c602.925%2c35.525%2c579.416%2c-83.307C557.061%2c-196.305%2c528.276%2c-306.299%2c463.074%2c-401.256C392.109%2c-504.606%2c314.556%2c-630.08%2c190.69%2c-649.429C66.444%2c-668.837%2c-37.154%2c-559.778%2c-145.744%2c-496.359C-229.522%2c-447.431%2c-310.234%2c-397.102%2c-370.943%2c-321.424C-429.934%2c-247.887%2c-469.415%2c-162.606%2c-487.675%2c-70.117C-506.677%2c26.127%2c-501.875%2c123.031%2c-477.453%2c218.045C-449.038%2c328.594%2c-423.995%2c449.951%2c-335.477%2c522.013C-244.183%2c596.334%2c-117.017%2c593.884%2c0%2c606.736' fill='%23e8eef5'%3e%3c/path%3e%3cpath d='M1440 1068.711C1570.607 1066.49 1703.255 1211.001 1816.2069999999999 1145.3890000000001 1927.722 1080.612 1892.941 907.346 1930.2939999999999 783.91 1961.779 679.864 2010.934 585.262 2018.519 476.822 2027.673 345.954 2073 184.399 1978.6 93.30099999999999 1882.329 0.3970000000000482 1718.7 82.351 1586.7640000000001 60.16699999999997 1475.917 41.528999999999996 1378.01-48.668000000000006 1267.875-26.202999999999975 1155.531-3.2870000000000346 1082.326 98.77499999999998 1001.043 179.64100000000002 913.33 266.905 785.146 341.063 774.788 464.35699999999997 764.411 587.88 903.822 668.724 950.3009999999999 783.638 999.948 906.384 941.049 1091.714 1055.478 1158.328 1171.57 1225.9099999999999 1305.689 1070.995 1440 1068.711' fill='%23d4dbe6'%3e%3c/path%3e%3c/g%3e%3cdefs%3e%3cmask id='SvgjsMask1000'%3e%3crect width='1440' height='560' fill='white'%3e%3c/rect%3e%3c/mask%3e%3c/defs%3e%3c/svg%3e\")",
+        backgroundColor: isDarkMode ? '#0e2a47' : '#f0f4f8',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
+      {/* Loading Screen */}
+      {isLoading && (
+        <div className="fixed inset-0 flex flex-col items-center justify-center z-50" style={{ backgroundColor: isDarkMode ? '#0e2a47' : '#f0f4f8' }}>
+          <style>{`
+            .spinner {
+              position: absolute;
+              width: 9px;
+              height: 9px;
+            }
+            .spinner div {
+              position: absolute;
+              width: 50%;
+              height: 150%;
+              background: ${isDarkMode ? '#ffffff' : '#000000'};
+              transform: rotate(calc(var(--rotation) * 1deg)) translate(0, calc(var(--translation) * 1%));
+              animation: spinner-fzua35 1s calc(var(--delay) * 1s) infinite ease;
+            }
+            .spinner div:nth-child(1) { --delay: 0.1; --rotation: 36; --translation: 150; }
+            .spinner div:nth-child(2) { --delay: 0.2; --rotation: 72; --translation: 150; }
+            .spinner div:nth-child(3) { --delay: 0.3; --rotation: 108; --translation: 150; }
+            .spinner div:nth-child(4) { --delay: 0.4; --rotation: 144; --translation: 150; }
+            .spinner div:nth-child(5) { --delay: 0.5; --rotation: 180; --translation: 150; }
+            .spinner div:nth-child(6) { --delay: 0.6; --rotation: 216; --translation: 150; }
+            .spinner div:nth-child(7) { --delay: 0.7; --rotation: 252; --translation: 150; }
+            .spinner div:nth-child(8) { --delay: 0.8; --rotation: 288; --translation: 150; }
+            .spinner div:nth-child(9) { --delay: 0.9; --rotation: 324; --translation: 150; }
+            .spinner div:nth-child(10) { --delay: 1; --rotation: 360; --translation: 150; }
+            @keyframes spinner-fzua35 {
+              0%, 10%, 20%, 30%, 50%, 60%, 70%, 80%, 90%, 100% {
+                transform: rotate(calc(var(--rotation) * 1deg)) translate(0, calc(var(--translation) * 1%));
+              }
+              50% {
+                transform: rotate(calc(var(--rotation) * 1deg)) translate(0, calc(var(--translation) * 1.5%));
+              }
+            }
+          `}</style>
+          <div className="spinner">
+            {[...Array(10)].map((_, i) => <div key={i} />)}
+          </div>
+          <p className={`mt-8 text-lg font-medium ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Calcul IRSA</p>
+        </div>
+      )}
+
       <div className="container mx-auto px-4 py-8 max-w-5xl">
         {/* Header */}
         <div className="text-center mb-8">
@@ -105,7 +168,7 @@ export default function App() {
               onClick={() => setActiveTab('calculator')}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all ${
                 activeTab === 'calculator'
-                  ? 'bg-purple-600 text-white shadow-lg'
+                  ? 'bg-blue-600 text-white shadow-lg'
                   : isDarkMode
                   ? 'text-slate-400 hover:text-white hover:bg-slate-700/50'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
@@ -119,7 +182,7 @@ export default function App() {
               onClick={() => setActiveTab('guide')}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all ${
                 activeTab === 'guide'
-                  ? 'bg-purple-600 text-white shadow-lg'
+                  ? 'bg-blue-600 text-white shadow-lg'
                   : isDarkMode
                   ? 'text-slate-400 hover:text-white hover:bg-slate-700/50'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
@@ -133,7 +196,7 @@ export default function App() {
               onClick={() => setActiveTab('feedback')}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all ${
                 activeTab === 'feedback'
-                  ? 'bg-purple-600 text-white shadow-lg'
+                  ? 'bg-blue-600 text-white shadow-lg'
                   : isDarkMode
                   ? 'text-slate-400 hover:text-white hover:bg-slate-700/50'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
@@ -163,7 +226,7 @@ export default function App() {
           {activeTab === 'calculator' && (
             <div className={`${isDarkMode ? 'bg-slate-800/50 backdrop-blur-sm border border-slate-700/50' : 'bg-white/80 backdrop-blur-sm border border-slate-200/50'} rounded-2xl p-6 md:p-8 shadow-xl`}>
               <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-                <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-purple-300' : 'text-purple-700'}`}>Calculateur IRSA</h2>
+                <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-blue-300' : 'text-blue-700'}`}>Calculateur IRSA</h2>
                 
                 {/* Mode Switch */}
                 <div className={`mt-4 md:mt-0 inline-flex p-1 rounded-xl ${isDarkMode ? 'bg-slate-900/50' : 'bg-slate-100'}`}>
@@ -171,7 +234,7 @@ export default function App() {
                     onClick={() => setCalcMode('brutToNet')}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                       calcMode === 'brutToNet'
-                        ? 'bg-purple-600 text-white shadow-md'
+                        ? 'bg-blue-600 text-white shadow-md'
                         : isDarkMode
                         ? 'text-slate-400 hover:text-white'
                         : 'text-slate-600 hover:text-slate-900'
@@ -183,7 +246,7 @@ export default function App() {
                     onClick={() => setCalcMode('netToBrut')}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                       calcMode === 'netToBrut'
-                        ? 'bg-purple-600 text-white shadow-md'
+                        ? 'bg-blue-600 text-white shadow-md'
                         : isDarkMode
                         ? 'text-slate-400 hover:text-white'
                         : 'text-slate-600 hover:text-slate-900'
@@ -204,7 +267,7 @@ export default function App() {
                     type="number"
                     value={calcMode === 'brutToNet' ? salaireBrut : salaireNet}
                     onChange={(e) => calcMode === 'brutToNet' ? setSalaireBrut(e.target.value) : setSalaireNet(e.target.value)}
-                    className={`w-full px-4 py-3 ${isDarkMode ? 'bg-slate-900/50 border-slate-600 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'} rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all`}
+                    className={`w-full px-4 py-3 ${isDarkMode ? 'bg-slate-900/50 border-slate-600 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all`}
                     placeholder={calcMode === 'brutToNet' ? 'Ex: 500000' : 'Ex: 400000'}
                   />
                 </div>
@@ -219,7 +282,7 @@ export default function App() {
                     value={nombreEnfants}
                     onChange={(e) => setNombreEnfants(e.target.value)}
                     min="0"
-                    className={`w-full px-4 py-3 ${isDarkMode ? 'bg-slate-900/50 border-slate-600 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'} rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all`}
+                    className={`w-full px-4 py-3 ${isDarkMode ? 'bg-slate-900/50 border-slate-600 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all`}
                     placeholder="Ex: 2"
                   />
                   <p className={`text-xs mt-1 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Réduction de 2 000 Ar par enfant</p>
@@ -233,7 +296,7 @@ export default function App() {
                         <p className={`font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Cotisation CNaPS</p>
                         <p className={`text-sm ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>1% du salaire brut (obligatoire, plafonné à 2 400 000 Ar)</p>
                       </div>
-                      <span className={`font-bold ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`}>
+                      <span className={`font-bold ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
                         {formatAr(calculerCotisations(calcMode === 'brutToNet' ? parseFloat(salaireBrut) || 0 : (parseFloat(salaireNet) || 0) * 1.2, true).cnaps)}
                       </span>
                     </div>
@@ -249,7 +312,7 @@ export default function App() {
                         <p className={`text-sm ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>1% du salaire brut (optionnel, plafonné à 2 400 000 Ar)</p>
                       </div>
                       <div className="flex items-center gap-4">
-                        <span className={`font-bold ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`}>
+                        <span className={`font-bold ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
                           {avecSanitaire ? formatAr(calculerCotisations(calcMode === 'brutToNet' ? parseFloat(salaireBrut) || 0 : (parseFloat(salaireNet) || 0) * 1.2, true).sanitaire) : '0 Ar'}
                         </span>
                         <label className="relative inline-flex items-center cursor-pointer">
@@ -259,7 +322,7 @@ export default function App() {
                             onChange={(e) => setAvecSanitaire(e.target.checked)}
                             className="sr-only peer"
                           />
-                          <div className="w-11 h-6 bg-slate-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-purple-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                          <div className="w-11 h-6 bg-slate-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                         </label>
                       </div>
                     </div>
@@ -269,7 +332,7 @@ export default function App() {
 
               <button
                 onClick={handleCalcul}
-                className="w-full px-6 py-4 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+                className="w-full px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98]"
               >
                 {calcMode === 'brutToNet' ? 'Calculer l\'IRSA' : 'Calculer le salaire brut'}
               </button>
@@ -277,16 +340,16 @@ export default function App() {
               {/* Résultats */}
               {resultat && (
                 <div className="mt-10 space-y-8">
-                  <h3 className={`text-2xl font-bold ${isDarkMode ? 'text-purple-300' : 'text-purple-700'}`}>Résultat du calcul</h3>
+                  <h3 className={`text-2xl font-bold ${isDarkMode ? 'text-blue-300' : 'text-blue-700'}`}>Résultat du calcul</h3>
                   
                   {/* Carte principale - Salaire Net */}
-                  <div className={`bg-purple-600 rounded-2xl p-8 shadow-2xl`}>
+                  <div className={`bg-blue-600 rounded-2xl p-8 shadow-2xl`}>
                     <div className="text-center">
-                      <p className="text-purple-200 text-sm font-medium mb-2">
+                      <p className="text-blue-200 text-sm font-medium mb-2">
                         {calcMode === 'brutToNet' ? 'Salaire Net Final' : 'Salaire Brut Calculé'}
                       </p>
                       <p className="text-4xl md:text-5xl font-bold text-white">{formatAr(resultat.salaireNet)}</p>
-                      <p className="text-purple-200 text-xs mt-2">Après déductions et impôts</p>
+                      <p className="text-blue-200 text-xs mt-2">Après déductions et impôts</p>
                     </div>
                   </div>
 
@@ -327,7 +390,7 @@ export default function App() {
                       </div>
                       <div className="flex justify-between items-center py-3 border-b border-slate-700">
                         <span className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>= Base Imposable (arrondie)</span>
-                        <span className={`font-semibold ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`}>{formatAr(resultat.baseImposable)}</span>
+                        <span className={`font-semibold ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>{formatAr(resultat.baseImposable)}</span>
                       </div>
                       <div className="flex justify-between items-center py-3 border-b border-slate-700">
                         <span className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>IRSA Brut (progressif)</span>
@@ -367,7 +430,7 @@ export default function App() {
                               <td className={`py-3 px-4 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{tranche.label}</td>
                               <td className={`py-3 px-4 text-right font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{(tranche.taux * 100).toFixed(0)}%</td>
                               <td className={`py-3 px-4 text-right ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{formatAr(tranche.imposable, true)}</td>
-                              <td className={`py-3 px-4 text-right font-semibold ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`}>{formatAr(tranche.impot, true)}</td>
+                              <td className={`py-3 px-4 text-right font-semibold ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>{formatAr(tranche.impot, true)}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -382,9 +445,18 @@ export default function App() {
           {/* Guide Tab */}
           {activeTab === 'guide' && (
             <div className={`${isDarkMode ? 'bg-slate-800/50 backdrop-blur-sm border border-slate-700/50' : 'bg-white/80 backdrop-blur-sm border border-slate-200/50'} rounded-2xl p-6 md:p-8 shadow-xl`}>
-              <h2 className={`text-2xl font-bold mb-6 ${isDarkMode ? 'text-purple-300' : 'text-purple-700'}`}>Infos & Guide IRSA 2026</h2>
+              <h2 className={`text-2xl font-bold mb-6 ${isDarkMode ? 'text-blue-300' : 'text-blue-700'}`}>Infos & Guide IRSA 2026</h2>
               
               <div className="space-y-8">
+                {/* Welcome Section */}
+                <div className={`p-6 rounded-xl ${isDarkMode ? 'bg-blue-500/10 border border-blue-500/30' : 'bg-blue-50 border border-blue-200'}`}>
+                  <h3 className={`text-xl font-semibold mb-3 ${isDarkMode ? 'text-blue-300' : 'text-blue-700'}`}>Bienvenue !</h3>
+                  <p className={`text-sm leading-relaxed ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                    Ce guide vous accompagne dans la compréhension et le calcul de l'IRSA (Impôt sur le Revenu des Salaires et Assimilés) à Madagascar. 
+                    Conforme à la Loi de Finances 2026, il présente le nouveau barème progressif, les règles de calcul officielles, 
+                    et les nouveautés de cette année. Utilisez le calculateur pour obtenir instantanément votre IRSA net à payer.
+                  </p>
+                </div>
                 {/* Barème fiscal */}
                 <div>
                   <h3 className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Barème Fiscal Progressif (Loi de Finances 2026)</h3>
@@ -568,7 +640,7 @@ export default function App() {
                       value={feedbackName}
                       onChange={(e) => setFeedbackName(e.target.value)}
                       required
-                      className={`w-full px-4 py-3 ${isDarkMode ? 'bg-slate-900/50 border-slate-600 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'} rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all`}
+                      className={`w-full px-4 py-3 ${isDarkMode ? 'bg-slate-900/50 border-slate-600 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all`}
                       placeholder="Votre nom"
                     />
                   </div>
@@ -583,7 +655,7 @@ export default function App() {
                       value={feedbackEmail}
                       onChange={(e) => setFeedbackEmail(e.target.value)}
                       required
-                      className={`w-full px-4 py-3 ${isDarkMode ? 'bg-slate-900/50 border-slate-600 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'} rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all`}
+                      className={`w-full px-4 py-3 ${isDarkMode ? 'bg-slate-900/50 border-slate-600 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all`}
                       placeholder="votre@email.com"
                     />
                   </div>
